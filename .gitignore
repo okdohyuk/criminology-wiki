@@ -5,3 +5,6 @@ raw/
 AGENTS.md
 CLAUDE.md
 .DS_Store
+.pages-src/
+.site/
+__pycache__/

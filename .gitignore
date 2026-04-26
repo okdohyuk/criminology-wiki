@@ -8,3 +8,6 @@ CLAUDE.md
 .pages-src/
 .site/
 __pycache__/
+
+transcribe.log
+transcribe.sh

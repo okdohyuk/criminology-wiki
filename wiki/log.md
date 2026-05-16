@@ -15,6 +15,29 @@
 
 ---
 
+### 2026-05-16 — Loop #36: 범죄학용어 PDF 통합 (BarCharts QuickStudy)
+
+- **작업**: Ingest
+- **원본**: `raw/범죄학용어.pdf` — BarCharts QuickStudy: Criminology (Michael Pittaro, M.P.A., ©2010, 6p folded chart). 범죄학 전 영역의 영문 압축 개관 + 용어집.
+- **신규 페이지 8개**:
+  - `wiki/차별접촉이론.md` — Sutherland 9명제, Glaser 차별식별, Burgess & Akers 차별강화로의 분화. 화이트칼라범죄와의 직결
+  - `wiki/신고전주의-범죄학.md` — Just Deserts(von Hirsch 1976), 정기형, 무력화, 일반·특별억제, 재범률 지표화. Martinson 1974 → Wilson 1975 → 한국 양형기준제(2007)·전자감독·신상공개
+  - `wiki/생물학적-범죄이론.md` — Gall 골상학·Lombroso 격세유전 이후 Goring 반박·Kretschmer/Sheldon 체형론·Dugdale Juke·Goddard Kallikak·Jacobs XYY(Speck 사례 오류)·E.O. Wilson 사회생물학 100년 계보
+  - `wiki/심리학적-범죄이론.md` — Freud 정신분석·Skinner 조작적 조건화·Bandura 모방학습·Cleckley 사이코패스·Eysenck 인격장애 4유형·Dollard 좌절-공격·Halleck 적응이론·Bowlby 애착이론
+  - `wiki/사회갈등이론.md` — Marx·Bonger·Vold·Dahrendorf·Turk·Chambliss·Quinney 계보. 좌파현실주의·Convict 범죄학·평화주의 범죄학
+  - `wiki/페미니스트-범죄학.md` — Adler/Simon 해방가설·Daly/Chesney-Lind 남성중심성 비판·Hagan 권력통제이론. 가정폭력·성폭력 법제화의 사상적 모체
+  - `wiki/재통합적-수치심.md` — Braithwaite(1989). 재통합적 vs 낙인적 수치심. 일본 vs 미국 비교. 회복적 사법·FGC의 직접 엔진
+  - `wiki/범죄학-용어집-개요.md` — PDF 전체의 인덱스. 6개 섹션 × 위키 페이지 매핑표. 미커버 항목(Goffman 드라마투르기, Kaplan 자기비하, Hawthorne effect 등) 정리
+- **index.md**: 범죄 이론 섹션에 신규 5개 페이지, 용어 섹션에 1개 추가
+- **의외의 연결점 발굴**:
+  - 차별접촉이론(Sutherland) ↔ 화이트칼라범죄: 같은 학자가 만든 한 묶음
+  - 페미니스트 범죄학 ↔ 매맞는 배우자 증후군 ↔ 학습된 무기력: Walker(임상)와 Seligman(실험)이 만난 1970s
+  - 재통합적 수치심 ↔ 낙인이론: 30년 후의 정책적 응답
+  - 신고전주의(응보 부활) ↔ 회복적 사법(응보 비판)이 1970s 동시 폭발 — 미국 사회 분열의 거울
+  - Lombroso 여성성 가설(1893) ↔ Adler 해방가설(1975): 80년 시차 동형구조 ("여성의 변화가 범죄를 만든다")
+
+---
+
 ### 2026-05-11 — Loop #35: 교도소화 3녹음 / 가정폭력 2녹음 / 교정처우론 2녹음 / 조작적정의 9주차 녹음 / 연구윤리 3주차 녹음
 
 - **작업**: 텍스트 5건 반영

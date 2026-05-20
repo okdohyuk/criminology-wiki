@@ -186,6 +186,9 @@ def build_layout(repo_url: str | None) -> str:
     <script>
     (function(){{
       var SEARCH_URL='{{{{ "/assets/search.json" | relative_url }}}}';
+      /* SEARCH_URL은 Jekyll relative_url 필터로 렌더링됨 (예: /criminology-wiki/assets/search.json).
+         base를 추출해 어느 서브디렉터리 배포에서도 링크가 올바르게 동작하도록 함. */
+      var base=SEARCH_URL.split('/assets/')[0];
       var idx=null,busy=false,timer;
       var inp=document.getElementById('wiki-search');
       var box=document.getElementById('search-results');
@@ -193,12 +196,13 @@ def build_layout(repo_url: str | None) -> str:
       function load(cb){{if(idx)return cb();if(busy)return;busy=true;fetch(SEARCH_URL).then(function(r){{return r.json();}}).then(function(d){{idx=d;cb();}}).catch(function(){{busy=false;}});}}
       function esc(s){{return String(s).replace(/[&<>"']/g,function(c){{return{{'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}}[c];}});}}
       function hi(t,q){{if(!q)return esc(t);var re=new RegExp('('+q.replace(/[.*+?^${{}}()|[\\]\\\\]/g,'\\\\$&')+')','gi');return esc(t).replace(re,'<mark>$1</mark>');}}
+      function goto(url){{location.href=base+url;}}
       function render(q){{
         var lq=q.trim().toLowerCase();
         if(!lq||!idx){{hide();return;}}
         var res=idx.map(function(p){{var ts=p.title.toLowerCase().indexOf(lq)>=0,es=p.excerpt.toLowerCase().indexOf(lq)>=0;return(ts||es)?{{p:p,sc:ts?2:1}}:null;}}).filter(Boolean).sort(function(a,b){{return b.sc-a.sc;}}).slice(0,8);
         if(!res.length){{hide();return;}}
-        box.innerHTML=res.map(function(r){{var p=r.p,ex=p.excerpt?p.excerpt.slice(0,90)+'…':'';return'<li role="option" data-href="'+esc(p.url)+'" tabindex="-1"><span class="sr-title">'+hi(p.title,q.trim())+'</span><span class="sr-meta">'+esc(p.category)+'</span>'+(ex?'<span class="sr-excerpt">'+hi(ex,q.trim())+'</span>':'')+'</li>';}}).join('');
+        box.innerHTML=res.map(function(r){{var p=r.p,ex=p.excerpt?p.excerpt.slice(0,90)+'…':'';return'<li role="option" data-url="'+esc(p.url)+'" tabindex="-1"><span class="sr-title">'+hi(p.title,q.trim())+'</span><span class="sr-meta">'+esc(p.category)+'</span>'+(ex?'<span class="sr-excerpt">'+hi(ex,q.trim())+'</span>':'')+'</li>';}}).join('');
         box.removeAttribute('hidden');
       }}
       function hide(){{box.setAttribute('hidden','');box.innerHTML='';}}
@@ -209,10 +213,10 @@ def build_layout(repo_url: str | None) -> str:
         var items=Array.from(box.querySelectorAll('li')),c=cur(),i=c?items.indexOf(c):-1;
         if(e.key==='ArrowDown'){{e.preventDefault();if(c)c.classList.remove('sr-active');var n=items[(i+1)%items.length];if(n)n.classList.add('sr-active');}}
         else if(e.key==='ArrowUp'){{e.preventDefault();if(c)c.classList.remove('sr-active');var p2=items[(i-1+items.length)%items.length];if(p2)p2.classList.add('sr-active');}}
-        else if(e.key==='Enter'){{var go=c||items[0];if(go){{e.preventDefault();location.href=go.dataset.href;}}}}
+        else if(e.key==='Enter'){{var go=c||items[0];if(go){{e.preventDefault();goto(go.dataset.url);}}}}
         else if(e.key==='Escape'){{hide();inp.blur();}}
       }});
-      box.addEventListener('click',function(e){{var li=e.target.closest('li[data-href]');if(li)location.href=li.dataset.href;}});
+      box.addEventListener('click',function(e){{var li=e.target.closest('li[data-url]');if(li)goto(li.dataset.url);}});
       document.addEventListener('click',function(e){{if(!inp.contains(e.target)&&!box.contains(e.target))hide();}});
     }})();
     </script>

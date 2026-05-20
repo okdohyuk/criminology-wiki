@@ -84,6 +84,30 @@ def strip_fenced_code(text: str) -> str:
     return FENCED_CODE_RE.sub('', text)
 
 
+_MD_STRIP_RE = re.compile(
+    r'```.*?```'           # fenced code
+    r'|`[^`]+`'            # inline code
+    r'|^#{1,6}\s+'         # headings
+    r'|^[-*_]{3,}\s*$'     # hr
+    r'|\[\[([^\]|]+)(?:\|([^\]]+))?\]\]'  # wikilinks
+    r'|\[([^\]]+)\]\([^\)]*\)'            # md links
+    r'|\*{1,3}([^*]*)\*{1,3}'            # bold/italic
+    r'|^>\s*'              # blockquote
+    r'|^-\s+카테고리:.*$'  # meta lines
+    r'|^-\s+생성:.*$'
+    r'|^-\s+최근.*$',
+    re.MULTILINE | re.DOTALL,
+)
+
+
+def extract_excerpt(text: str, max_chars: int = 250) -> str:
+    def _repl(m: re.Match[str]) -> str:
+        return m.group(2) or m.group(1) or m.group(3) or m.group(4) or ' '
+    cleaned = _MD_STRIP_RE.sub(_repl, text)
+    cleaned = re.sub(r'\s+', ' ', cleaned).strip()
+    return cleaned[:max_chars]
+
+
 def convert_wikilinks(text: str, *, known_pages: set[str]) -> tuple[str, list[str]]:
     unresolved: list[str] = []
 
@@ -142,7 +166,12 @@ def build_layout(repo_url: str | None) -> str:
           <nav class=\"top-nav\">
             <a href=\"{{{{ '/' | relative_url }}}}\">전체 목차</a>
             <a href=\"{{{{ '/log/' | relative_url }}}}\">작업 이력</a>
-          </nav>{github_link}
+          </nav>
+          <div class=\"search-wrap\">
+            <input id=\"wiki-search\" class=\"search-input\" type=\"search\"
+                   placeholder=\"검색…\" autocomplete=\"off\" aria-label=\"위키 검색\">
+            <ul id=\"search-results\" class=\"search-results\" role=\"listbox\" hidden></ul>
+          </div>{github_link}
         </div>
       </div>
     </header>
@@ -154,6 +183,39 @@ def build_layout(repo_url: str | None) -> str:
         {{{{ content }}}}
       </article>
     </main>
+    <script>
+    (function(){{
+      var SEARCH_URL='{{{{ "/assets/search.json" | relative_url }}}}';
+      var idx=null,busy=false,timer;
+      var inp=document.getElementById('wiki-search');
+      var box=document.getElementById('search-results');
+      if(!inp)return;
+      function load(cb){{if(idx)return cb();if(busy)return;busy=true;fetch(SEARCH_URL).then(function(r){{return r.json();}}).then(function(d){{idx=d;cb();}}).catch(function(){{busy=false;}});}}
+      function esc(s){{return String(s).replace(/[&<>"']/g,function(c){{return{{'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}}[c];}});}}
+      function hi(t,q){{if(!q)return esc(t);var re=new RegExp('('+q.replace(/[.*+?^${{}}()|[\\]\\\\]/g,'\\\\$&')+')','gi');return esc(t).replace(re,'<mark>$1</mark>');}}
+      function render(q){{
+        var lq=q.trim().toLowerCase();
+        if(!lq||!idx){{hide();return;}}
+        var res=idx.map(function(p){{var ts=p.title.toLowerCase().indexOf(lq)>=0,es=p.excerpt.toLowerCase().indexOf(lq)>=0;return(ts||es)?{{p:p,sc:ts?2:1}}:null;}}).filter(Boolean).sort(function(a,b){{return b.sc-a.sc;}}).slice(0,8);
+        if(!res.length){{hide();return;}}
+        box.innerHTML=res.map(function(r){{var p=r.p,ex=p.excerpt?p.excerpt.slice(0,90)+'…':'';return'<li role="option" data-href="'+esc(p.url)+'" tabindex="-1"><span class="sr-title">'+hi(p.title,q.trim())+'</span><span class="sr-meta">'+esc(p.category)+'</span>'+(ex?'<span class="sr-excerpt">'+hi(ex,q.trim())+'</span>':'')+'</li>';}}).join('');
+        box.removeAttribute('hidden');
+      }}
+      function hide(){{box.setAttribute('hidden','');box.innerHTML='';}}
+      function cur(){{return box.querySelector('li.sr-active');}}
+      inp.addEventListener('input',function(){{clearTimeout(timer);timer=setTimeout(function(){{load(function(){{render(inp.value);}});}},150);}});
+      inp.addEventListener('focus',function(){{load(function(){{if(inp.value.trim())render(inp.value);}});}});
+      inp.addEventListener('keydown',function(e){{
+        var items=Array.from(box.querySelectorAll('li')),c=cur(),i=c?items.indexOf(c):-1;
+        if(e.key==='ArrowDown'){{e.preventDefault();if(c)c.classList.remove('sr-active');var n=items[(i+1)%items.length];if(n)n.classList.add('sr-active');}}
+        else if(e.key==='ArrowUp'){{e.preventDefault();if(c)c.classList.remove('sr-active');var p2=items[(i-1+items.length)%items.length];if(p2)p2.classList.add('sr-active');}}
+        else if(e.key==='Enter'){{var go=c||items[0];if(go){{e.preventDefault();location.href=go.dataset.href;}}}}
+        else if(e.key==='Escape'){{hide();inp.blur();}}
+      }});
+      box.addEventListener('click',function(e){{var li=e.target.closest('li[data-href]');if(li)location.href=li.dataset.href;}});
+      document.addEventListener('click',function(e){{if(!inp.contains(e.target)&&!box.contains(e.target))hide();}});
+    }})();
+    </script>
   </body>
 </html>
 """
@@ -406,6 +468,46 @@ article td { padding: 0.6rem 0.9rem; color: var(--fg-3); vertical-align: top; bo
 article tr:last-child td { border-bottom: none; }
 article tr:hover td { background: var(--bg-muted); }
 
+/* ── 검색 ─────────────────────────────────────── */
+.search-wrap { position: relative; flex: 0 0 auto; }
+.search-input {
+  width: 180px; height: 32px;
+  padding: 0 10px 0 30px;
+  font-family: var(--font-body); font-size: var(--fs-d3);
+  color: var(--fg-1); background: var(--bg-muted);
+  border: 1px solid var(--border-subtle); border-radius: var(--radius-md);
+  outline: none; appearance: none; -webkit-appearance: none;
+  transition: width 200ms ease, border-color 160ms ease, box-shadow 160ms ease, background 160ms ease;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='14' height='14' viewBox='0 0 24 24' fill='none' stroke='%2371717a' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Ccircle cx='11' cy='11' r='8'/%3E%3Cpath d='m21 21-4.35-4.35'/%3E%3C/svg%3E");
+  background-repeat: no-repeat; background-position: 8px center; background-size: 14px;
+}
+.search-input:focus {
+  width: 240px; border-color: var(--point-3);
+  box-shadow: 0 0 0 2px var(--accent-tint);
+  background-color: var(--bg-surface); outline: none;
+}
+.search-input::-webkit-search-cancel-button { -webkit-appearance: none; }
+.search-results {
+  position: absolute; top: calc(100% + 6px); right: 0; width: 320px;
+  background: var(--bg-surface); border: 1px solid var(--border-subtle);
+  border-radius: var(--radius-xl); box-shadow: var(--shadow-lg);
+  list-style: none; padding: 6px; margin: 0;
+  z-index: 200; max-height: 400px; overflow-y: auto;
+}
+.search-results li {
+  display: flex; flex-direction: column; gap: 2px;
+  padding: 8px 10px; border-radius: var(--radius-sm);
+  cursor: pointer; transition: background 120ms ease;
+}
+.search-results li:hover, .search-results li.sr-active { background: var(--bg-muted); }
+.sr-title { font-size: var(--fs-d3); font-weight: var(--fw-semibold); color: var(--fg-1); line-height: 1.4; }
+.sr-meta { font-size: var(--fs-c1); color: var(--accent-fg); font-weight: var(--fw-medium); }
+.sr-excerpt { font-size: var(--fs-c1); color: var(--fg-5); line-height: 1.5; }
+.search-results mark {
+  background: var(--accent-tint); color: var(--accent-fg);
+  border-radius: 2px; padding: 0 1px;
+}
+
 /* ── 반응형 ────────────────────────────────────── */
 @media (max-width: 640px) {
   article { padding: 1.25rem 1.1rem; border-radius: var(--radius-xl); }
@@ -413,6 +515,9 @@ article tr:hover td { background: var(--bg-muted); }
   .header-actions { width: 100%; justify-content: space-between; }
   article h1 { font-size: var(--fs-t2); }
   article h2 { font-size: var(--fs-t3); }
+  .search-input { width: 130px; }
+  .search-input:focus { width: 160px; }
+  .search-results { width: calc(100vw - 2rem); right: 0; }
 }
 """
 
@@ -462,6 +567,7 @@ def main() -> int:
     write_text(out_dir / "_layouts" / "default.html", build_layout(repo_url))
     write_text(out_dir / "assets" / "site.css", build_css())
     log_text = clean_for_pages(read_text(WIKI_DIR / "log.md"))
+    search_entries: list[dict[str, str]] = []
 
     # Main wiki index.
     index_text = clean_for_pages(read_text(WIKI_DIR / "index.md"))
@@ -496,6 +602,15 @@ def main() -> int:
             out_dir / "wiki" / slug / "index.md",
             front_matter(title=meta["title"], permalink=f"/wiki/{slug}/", source_path=meta["source_path"]) + converted,
         )
+        search_entries.append({
+            "slug": slug,
+            "title": meta["title"],
+            "url": f"/wiki/{slug}/",
+            "category": meta["category"],
+            "excerpt": extract_excerpt(text),
+        })
+
+    write_text(out_dir / "assets" / "search.json", json.dumps(search_entries, ensure_ascii=False, separators=(',', ':')))
 
     if unresolved_links:
         lines = []

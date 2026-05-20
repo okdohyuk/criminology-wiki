@@ -510,14 +510,48 @@ article tr:hover td { background: var(--bg-muted); }
 
 /* ── 반응형 ────────────────────────────────────── */
 @media (max-width: 640px) {
-  article { padding: 1.25rem 1.1rem; border-radius: var(--radius-xl); }
-  .header-wrap { flex-direction: column; align-items: flex-start; gap: 0.5rem; }
-  .header-actions { width: 100%; justify-content: space-between; }
-  article h1 { font-size: var(--fs-t2); }
-  article h2 { font-size: var(--fs-t3); }
-  .search-input { width: 130px; }
-  .search-input:focus { width: 160px; }
-  .search-results { width: calc(100vw - 2rem); right: 0; }
+  /* 헤더: 2줄 레이아웃 — 1행 타이틀+GitHub, 2행 nav+검색 */
+  .header-wrap {
+    flex-wrap: wrap;
+    padding: 0.6rem 1rem;
+    gap: 0.35rem;
+  }
+  .site-title { flex: 1 1 auto; font-size: var(--fs-d2); }
+  .header-actions { order: 2; width: 100%; gap: 0.4rem; }
+  .top-nav { flex: 1; gap: 0; }
+  .top-nav a { padding: 4px 8px; font-size: 12px; }
+
+  /* 검색: 나머지 공간 채우기 */
+  .search-wrap { flex: 1; min-width: 0; }
+  .search-input { width: 100%; box-sizing: border-box; }
+  .search-input:focus { width: 100%; }
+  .search-results { width: 100vw; left: calc(-1 * (100vw - 100%) / 2); right: auto; }
+
+  /* 컨텐츠: 화면 전체 너비로 확장 */
+  .content { width: 100%; padding: 0 0 3rem; }
+
+  /* 아티클: 카드 제거 — 텍스트 위주 */
+  article {
+    border-radius: 0;
+    border-left: none;
+    border-right: none;
+    border-top: none;
+    padding: 1.25rem 1rem 2rem;
+    box-shadow: none;
+  }
+
+  /* 타이포그래피 축소 */
+  article h1 { font-size: 1.6rem; letter-spacing: -0.015em; margin-bottom: 1rem; }
+  article h2 { font-size: 1.25rem; margin-top: 2rem; }
+  article h3 { font-size: 1.1rem; margin-top: 1.5rem; }
+  article p, article li { font-size: var(--fs-d3); line-height: 1.75; }
+  article blockquote { padding: 0.75rem 0.9rem 0.75rem 1rem; font-size: var(--fs-c1); }
+
+  /* 테이블: 가로 스크롤 */
+  article table { display: block; overflow-x: auto; -webkit-overflow-scrolling: touch; }
+
+  /* source-note */
+  .source-note { font-size: 11px; }
 }
 """
 
